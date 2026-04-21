@@ -1,13 +1,13 @@
-import { v4 as uuidv4 } from "uuid";
 import {
-  Producer,
-  publishMessage,
-  publishToDLQ,
-  withRetry,
   OrderCreatedEvent,
   PaymentProcessedEvent,
+  publishMessage,
+  publishToDLQ,
   TOPICS,
+  withRetry,
 } from "@ecommerce/shared";
+import { Producer } from "kafkajs";
+import { v4 as uuidv4 } from "uuid";
 
 const FAILURE_RATE = 0.2;
 
