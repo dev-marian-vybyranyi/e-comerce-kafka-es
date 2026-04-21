@@ -56,9 +56,9 @@ export async function processDelivery(
       payment.orderId,
     );
     console.log(
-      `[Delivery] Order ${payment.orderId} → ${status} (courier: ${courier})`,
+      `[Delivery] Order ${payment.orderId} => ${status} (courier: ${courier})`,
     );
   }
 
-  console.log(`[Delivery] ✓ Order ${payment.orderId} delivered by ${courier}`);
+  console.log(`[Delivery] Order ${payment.orderId} delivered by ${courier}`);
 }
