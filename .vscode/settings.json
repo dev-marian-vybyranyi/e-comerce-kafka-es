@@ -1,0 +1,10 @@
+{
+  "yaml.schemas": {
+    "https://json.schemastore.org/grafana-datasource.json": [
+      "docker/grafana/provisioning/datasources/*.yml"
+    ],
+    "https://json.schemastore.org/prometheus.json": [
+      "docker/prometheus/*.yml"
+    ]
+  }
+}
