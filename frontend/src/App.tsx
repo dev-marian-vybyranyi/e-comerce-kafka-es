@@ -1,15 +1,7 @@
-import { StatCard } from "./components/ui/StatCard";
+import "./App.css";
 
 function App() {
-  return (
-    <>
-      <StatCard
-        label="Total Sales"
-        value="$12,345"
-        sub="+12% from last month"
-      />
-    </>
-  );
+  return <></>;
 }
 
 export default App;
