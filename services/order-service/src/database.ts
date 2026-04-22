@@ -1,8 +1,7 @@
-import Database from "better-sqlite3";
-import path from "path";
 import { OrderStatus } from "@ecommerce/shared";
+import { PrismaClient } from "@prisma/client";
 
-const db = new Database(path.join(__dirname, "../orders.db"));
+export const prisma = new PrismaClient();
 
 export interface OrderRow {
   orderId: string;
@@ -15,64 +14,67 @@ export interface OrderRow {
   updatedAt: string;
 }
 
-db.exec(`
-  CREATE TABLE IF NOT EXISTS orders (
-    orderId     TEXT PRIMARY KEY,
-    userId      TEXT NOT NULL,
-    items       TEXT NOT NULL,
-    totalAmount REAL NOT NULL,
-    status      TEXT NOT NULL DEFAULT 'PENDING',
-    courier     TEXT,
-    createdAt   TEXT NOT NULL,
-    updatedAt   TEXT NOT NULL
-  )
-`);
-
-export const db_instance: Database.Database = db;
-
-export function insertOrder(order: Omit<OrderRow, "courier">): void {
-  db.prepare(
-    `
-    INSERT INTO orders (orderId, userId, items, totalAmount, status, createdAt, updatedAt)
-    VALUES (@orderId, @userId, @items, @totalAmount, @status, @createdAt, @updatedAt)
-  `,
-  ).run(order);
-}
-
-export function updateOrderStatus(
-  orderId: string,
-  status: OrderStatus,
-  courier?: string,
-): void {
-  db.prepare(
-    `
-    UPDATE orders
-    SET status = @status, courier = @courier, updatedAt = @updatedAt
-    WHERE orderId = @orderId
-  `,
-  ).run({
-    orderId,
-    status,
-    courier: courier || null,
-    updatedAt: new Date().toISOString(),
+export async function insertOrder(
+  order: Omit<OrderRow, "courier">,
+): Promise<void> {
+  await prisma.order.create({
+    data: {
+      orderId: order.orderId,
+      userId: order.userId,
+      items: JSON.parse(order.items),
+      totalAmount: order.totalAmount,
+      status: order.status,
+      createdAt: new Date(order.createdAt),
+      updatedAt: new Date(order.updatedAt),
+    },
   });
 }
 
-export function getOrder(orderId: string): OrderRow | undefined {
-  return db.prepare("SELECT * FROM orders WHERE orderId = ?").get(orderId) as
-    | OrderRow
-    | undefined;
+export async function updateOrderStatus(
+  orderId: string,
+  status: OrderStatus,
+  courier?: string,
+): Promise<void> {
+  await prisma.order.update({
+    where: { orderId },
+    data: {
+      status,
+      courier: courier ?? null,
+      updatedAt: new Date(),
+    },
+  });
 }
 
-export function getAllOrders(limit = 50, offset = 0): OrderRow[] {
-  return db
-    .prepare("SELECT * FROM orders ORDER BY createdAt DESC LIMIT ? OFFSET ?")
-    .all(limit, offset) as OrderRow[];
-}
-
-export function getOrdersCount(): number {
-  const row = db.prepare("SELECT COUNT(*) as count FROM orders").get() as {
-    count: number;
+export async function getOrder(orderId: string): Promise<OrderRow | null> {
+  const order = await prisma.order.findUnique({ where: { orderId } });
+  if (!order) return null;
+  return {
+    ...order,
+    items: JSON.stringify(order.items),
+    createdAt: order.createdAt.toISOString(),
+    updatedAt: order.updatedAt.toISOString(),
+    status: order.status as OrderStatus,
   };
-  return row.count;
+}
+
+export async function getAllOrders(
+  limit = 50,
+  offset = 0,
+): Promise<OrderRow[]> {
+  const orders = await prisma.order.findMany({
+    orderBy: { createdAt: "desc" },
+    take: limit,
+    skip: offset,
+  });
+  return orders.map((o) => ({
+    ...o,
+    items: JSON.stringify(o.items),
+    createdAt: o.createdAt.toISOString(),
+    updatedAt: o.updatedAt.toISOString(),
+    status: o.status as OrderStatus,
+  }));
+}
+
+export async function getOrdersCount(): Promise<number> {
+  return prisma.order.count();
 }

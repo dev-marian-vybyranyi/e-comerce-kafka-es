@@ -1,19 +1,19 @@
-import { Router, Request, Response } from "express";
+import {
+  OrderCreatedEvent,
+  TOPICS,
+  createProducer,
+  httpRequestsTotal,
+  publishMessage,
+  register,
+} from "@ecommerce/shared";
+import { Request, Response, Router } from "express";
 import { v4 as uuidv4 } from "uuid";
 import { z } from "zod";
 import {
-  createProducer,
-  publishMessage,
-  OrderCreatedEvent,
-  TOPICS,
-  register,
-  httpRequestsTotal,
-} from "@ecommerce/shared";
-import {
-  insertOrder,
-  getOrder,
   getAllOrders,
+  getOrder,
   getOrdersCount,
+  insertOrder,
 } from "./database";
 import { sseManager } from "./sse";
 
@@ -56,7 +56,7 @@ router.post("/orders", async (req: Request, res: Response) => {
     createdAt,
   };
 
-  insertOrder({
+  await insertOrder({
     orderId,
     userId,
     items: JSON.stringify(items),
@@ -74,23 +74,24 @@ router.post("/orders", async (req: Request, res: Response) => {
 });
 
 // GET /orders
-router.get("/orders", (req: Request, res: Response) => {
+router.get("/orders", async (req: Request, res: Response) => {
   const limit = Math.min(parseInt(req.query.limit as string) || 20, 100);
   const offset = parseInt(req.query.offset as string) || 0;
 
-  const orders = getAllOrders(limit, offset).map((o) => ({
-    ...o,
-    items: JSON.parse(o.items),
-  }));
+  const [orders, total] = await Promise.all([
+    getAllOrders(limit, offset),
+    getOrdersCount(),
+  ]);
 
-  const total = getOrdersCount();
+  const result = orders.map((o) => ({ ...o, items: JSON.parse(o.items) }));
+
   httpRequestsTotal.inc({ method: "GET", route: "/orders", status: "200" });
-  return res.json({ orders, total, limit, offset });
+  return res.json({ orders: result, total, limit, offset });
 });
 
 // GET /orders/:id
-router.get("/orders/:id", (req: Request, res: Response) => {
-  const order = getOrder(req.params.id);
+router.get("/orders/:id", async (req: Request, res: Response) => {
+  const order = await getOrder(req.params.id);
   if (!order) {
     return res.status(404).json({ error: "Order not found" });
   }
