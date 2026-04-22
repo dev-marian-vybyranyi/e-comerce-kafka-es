@@ -1,13 +1,13 @@
-import { StatusBadge } from "./components/ui/StatusBadge";
+import { StatCard } from "./components/ui/StatCard";
 
 function App() {
   return (
     <>
-      <StatusBadge status="PENDING" />
-      <StatusBadge status="PREPARING" />
-      <StatusBadge status="SHIPPED" />
-      <StatusBadge status="DELIVERED" />
-      <StatusBadge status="PAYMENT_FAILED" />
+      <StatCard
+        label="Total Sales"
+        value="$12,345"
+        sub="+12% from last month"
+      />
     </>
   );
 }
