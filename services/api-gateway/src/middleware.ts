@@ -1,7 +1,8 @@
+import "dotenv/config";
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 
-const JWT_SECRET = process.env.JWT_SECRET as string;
+const JWT_SECRET = process.env.JWT_SECRET || "";
 
 export interface AuthRequest extends Request {
   user?: {
@@ -26,7 +27,8 @@ export function authMiddleware(
   try {
     req.user = jwt.verify(token, JWT_SECRET) as AuthRequest["user"];
     next();
-  } catch {
+  } catch (err) {
+    console.log("[Gateway] JWT verify error:", err);
     res.status(401).json({ error: "Invalid or expired token" });
   }
 }
