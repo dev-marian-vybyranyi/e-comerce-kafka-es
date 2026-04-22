@@ -1,26 +1,22 @@
 import { NextFunction, Request, Response } from "express";
-import { JwtPayload, verifyAccessToken } from "./jwt";
 
 export interface AuthRequest extends Request {
-  user?: JwtPayload;
+  user?: {
+    userId: string;
+    email: string;
+    username: string;
+  };
 }
 
 export function authMiddleware(
   req: AuthRequest,
-  res: Response,
+  _res: Response,
   next: NextFunction,
 ): void {
-  const header = req.headers.authorization;
-  if (!header?.startsWith("Bearer ")) {
-    res.status(401).json({ error: "No token provided" });
-    return;
-  }
-
-  const token = header.split(" ")[1];
-  try {
-    req.user = verifyAccessToken(token);
-    next();
-  } catch {
-    res.status(401).json({ error: "Invalid or expired token" });
-  }
+  req.user = {
+    userId: req.headers["x-user-id"] as string,
+    email: req.headers["x-user-email"] as string,
+    username: req.headers["x-username"] as string,
+  };
+  next();
 }
