@@ -6,6 +6,7 @@ volumes:
   esdata:
   grafana-data:
   prometheus-data:
+  pgdata:
 
 services:
   # Zookeeper
@@ -144,3 +145,35 @@ services:
     volumes:
       - grafana-data:/var/lib/grafana
       - ./docker/grafana/provisioning:/etc/grafana/provisioning
+
+  # PostgreSQL
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres
+    networks: [kafka-net]
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: ecommerce
+      POSTGRES_PASSWORD: ecommerce
+      POSTGRES_DB: ecommerce
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ecommerce"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    networks: [kafka-net]
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
