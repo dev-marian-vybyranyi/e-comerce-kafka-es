@@ -9,6 +9,7 @@ export interface AuthRequest extends Request {
     userId: string;
     email: string;
     username: string;
+    role: string;
   };
 }
 
@@ -28,7 +29,6 @@ export function authMiddleware(
     req.user = jwt.verify(token, JWT_SECRET) as AuthRequest["user"];
     next();
   } catch (err) {
-    console.log("[Gateway] JWT verify error:", err);
     res.status(401).json({ error: "Invalid or expired token" });
   }
 }

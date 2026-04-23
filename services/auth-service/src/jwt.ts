@@ -1,6 +1,6 @@
 import jwt, { SignOptions } from "jsonwebtoken";
 
-const JWT_SECRET = process.env.JWT_SECRET as string;
+const JWT_SECRET = process.env.JWT_SECRET || "my-super-secret-jwt-key";
 const JWT_EXPIRES_IN = (process.env.JWT_EXPIRES_IN ||
   "15m") as SignOptions["expiresIn"];
 
@@ -8,6 +8,7 @@ export interface JwtPayload {
   userId: string;
   email: string;
   username: string;
+  role: string;
 }
 
 export function signAccessToken(payload: JwtPayload): string {

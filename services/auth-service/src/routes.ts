@@ -53,13 +53,21 @@ router.post("/auth/register", async (req: Request, res: Response) => {
 
     const hashed = await bcrypt.hash(password, 10);
     const user = await prisma.user.create({
-      data: { email, username, password: hashed, firstName, lastName },
+      data: {
+        email,
+        username,
+        password: hashed,
+        firstName,
+        lastName,
+        role: "user",
+      },
     });
 
     const accessToken = signAccessToken({
       userId: user.id,
       email: user.email,
       username: user.username,
+      role: user.role,
     });
     const refreshToken = uuidv4();
     await saveRefreshToken(refreshToken, user.id);
@@ -71,6 +79,7 @@ router.post("/auth/register", async (req: Request, res: Response) => {
         username: user.username,
         firstName: user.firstName,
         lastName: user.lastName,
+        role: user.role,
       },
       accessToken,
       refreshToken,
@@ -105,6 +114,7 @@ router.post("/auth/login", async (req: Request, res: Response) => {
       userId: user.id,
       email: user.email,
       username: user.username,
+      role: user.role,
     });
     const refreshToken = uuidv4();
     await saveRefreshToken(refreshToken, user.id);
@@ -116,6 +126,7 @@ router.post("/auth/login", async (req: Request, res: Response) => {
         username: user.username,
         firstName: user.firstName,
         lastName: user.lastName,
+        role: user.role,
       },
       accessToken,
       refreshToken,
@@ -156,6 +167,7 @@ router.post("/auth/refresh", async (req: Request, res: Response) => {
       userId: user.id,
       email: user.email,
       username: user.username,
+      role: user.role,
     });
 
     return res.json({ accessToken, refreshToken: newRefreshToken });
@@ -168,9 +180,7 @@ router.post("/auth/refresh", async (req: Request, res: Response) => {
 // POST /auth/logout
 router.post("/auth/logout", async (req: Request, res: Response) => {
   const { refreshToken } = req.body;
-  if (refreshToken) {
-    await deleteRefreshToken(refreshToken);
-  }
+  if (refreshToken) await deleteRefreshToken(refreshToken);
   return res.json({ message: "Logged out successfully" });
 });
 
@@ -179,9 +189,7 @@ router.post(
   "/auth/logout-all",
   authMiddleware,
   async (req: AuthRequest, res: Response) => {
-    if (req.user) {
-      await deleteAllUserTokens(req.user.userId);
-    }
+    if (req.user) await deleteAllUserTokens(req.user.userId);
     return res.json({ message: "All sessions terminated" });
   },
 );
@@ -200,10 +208,10 @@ router.get(
           username: true,
           firstName: true,
           lastName: true,
+          role: true,
           createdAt: true,
         },
       });
-
       if (!user) return res.status(404).json({ error: "User not found" });
       return res.json({ user });
     } catch (err) {

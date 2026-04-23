@@ -1,6 +1,6 @@
+import "dotenv/config";
 import axios, { AxiosRequestConfig } from "axios";
 import cors from "cors";
-import "dotenv/config";
 import express, { Request, Response } from "express";
 import { authMiddleware, AuthRequest } from "./middleware";
 
@@ -33,6 +33,7 @@ async function proxyRequest(
         "x-user-id": extraHeaders["x-user-id"] ?? "",
         "x-username": extraHeaders["x-username"] ?? "",
         "x-user-email": extraHeaders["x-user-email"] ?? "",
+        "x-user-role": extraHeaders["x-user-role"] ?? "",
       },
       data: req.body,
       params: req.query,
@@ -47,28 +48,34 @@ async function proxyRequest(
   }
 }
 
+function getUserHeaders(req: AuthRequest): Record<string, string> {
+  return {
+    "x-user-id": req.user?.userId ?? "",
+    "x-username": req.user?.username ?? "",
+    "x-user-email": req.user?.email ?? "",
+    "x-user-role": req.user?.role ?? "user",
+  };
+}
+
 // Health
 app.get("/health", (_req, res) => {
   res.json({ status: "ok", service: "api-gateway", uptime: process.uptime() });
 });
 
 // Auth
-app.all("/api/auth/:path(*)", async (req: Request, res: Response, next) => {
+app.all("/api/auth/:path(*)", async (req: Request, res: Response) => {
   const authPath = "/auth/" + req.params.path;
   const isProtected = PROTECTED_AUTH_ROUTES.includes(authPath);
-
-  console.log(
-    `[Gateway] AUTH ${req.method} ${authPath} protected=${isProtected}`,
-  );
 
   if (isProtected) {
     authMiddleware(req as AuthRequest, res, async () => {
       const authReq = req as AuthRequest;
-      await proxyRequest(req, res, `http://localhost:3006${authPath}`, {
-        "x-user-id": authReq.user?.userId ?? "",
-        "x-username": authReq.user?.username ?? "",
-        "x-user-email": authReq.user?.email ?? "",
-      });
+      await proxyRequest(
+        req,
+        res,
+        `http://localhost:3006${authPath}`,
+        getUserHeaders(authReq),
+      );
     });
   } else {
     await proxyRequest(req, res, `http://localhost:3006${authPath}`);
@@ -86,11 +93,7 @@ app.get("/api/events", authMiddleware, (req: AuthRequest, res: Response) => {
   axios
     .get("http://localhost:3001/events", {
       responseType: "stream",
-      headers: {
-        "x-user-id": req.user?.userId ?? "",
-        "x-username": req.user?.username ?? "",
-        "x-user-email": req.user?.email ?? "",
-      },
+      headers: getUserHeaders(req),
     })
     .then((response) => {
       response.data.pipe(res);
@@ -105,11 +108,12 @@ app.all(
   authMiddleware,
   async (req: AuthRequest, res: Response) => {
     const path = "/" + req.params.path;
-    await proxyRequest(req, res, `http://localhost:3001/orders${path}`, {
-      "x-user-id": req.user?.userId ?? "",
-      "x-username": req.user?.username ?? "",
-      "x-user-email": req.user?.email ?? "",
-    });
+    await proxyRequest(
+      req,
+      res,
+      `http://localhost:3001/orders${path}`,
+      getUserHeaders(req),
+    );
   },
 );
 
@@ -117,11 +121,12 @@ app.all(
   "/api/orders",
   authMiddleware,
   async (req: AuthRequest, res: Response) => {
-    await proxyRequest(req, res, "http://localhost:3001/orders", {
-      "x-user-id": req.user?.userId ?? "",
-      "x-username": req.user?.username ?? "",
-      "x-user-email": req.user?.email ?? "",
-    });
+    await proxyRequest(
+      req,
+      res,
+      "http://localhost:3001/orders",
+      getUserHeaders(req),
+    );
   },
 );
 
@@ -131,7 +136,12 @@ app.all(
   authMiddleware,
   async (req: AuthRequest, res: Response) => {
     const path = "/" + req.params.path;
-    await proxyRequest(req, res, `http://localhost:3005/search${path}`);
+    await proxyRequest(
+      req,
+      res,
+      `http://localhost:3005/search${path}`,
+      getUserHeaders(req),
+    );
   },
 );
 
@@ -139,7 +149,12 @@ app.all(
   "/api/search",
   authMiddleware,
   async (req: AuthRequest, res: Response) => {
-    await proxyRequest(req, res, "http://localhost:3005/search");
+    await proxyRequest(
+      req,
+      res,
+      "http://localhost:3005/search",
+      getUserHeaders(req),
+    );
   },
 );
 
@@ -148,7 +163,12 @@ app.all(
   "/api/analytics",
   authMiddleware,
   async (req: AuthRequest, res: Response) => {
-    await proxyRequest(req, res, "http://localhost:3004/stats");
+    await proxyRequest(
+      req,
+      res,
+      "http://localhost:3004/stats",
+      getUserHeaders(req),
+    );
   },
 );
 
@@ -159,9 +179,4 @@ app.use((_req, res) => {
 
 app.listen(PORT, () => {
   console.log(`[api-gateway] Running on http://localhost:${PORT}`);
-  console.log(`  /api/auth/*      => auth-service:3006`);
-  console.log(`  /api/orders/*    => order-service:3001`);
-  console.log(`  /api/events      => order-service:3001 (SSE)`);
-  console.log(`  /api/search/*    => search-service:3005`);
-  console.log(`  /api/analytics/* => analytics-service:3004`);
 });
