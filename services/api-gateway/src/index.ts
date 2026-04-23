@@ -172,6 +172,34 @@ app.all(
   },
 );
 
+// Products
+app.all(
+  "/api/products/:path(*)",
+  authMiddleware,
+  async (req: AuthRequest, res: Response) => {
+    const path = "/" + req.params.path;
+    await proxyRequest(
+      req,
+      res,
+      `http://localhost:3007/products${path}`,
+      getUserHeaders(req),
+    );
+  },
+);
+
+app.all(
+  "/api/products",
+  authMiddleware,
+  async (req: AuthRequest, res: Response) => {
+    await proxyRequest(
+      req,
+      res,
+      "http://localhost:3007/products",
+      getUserHeaders(req),
+    );
+  },
+);
+
 // 404
 app.use((_req, res) => {
   res.status(404).json({ error: "Route not found" });
