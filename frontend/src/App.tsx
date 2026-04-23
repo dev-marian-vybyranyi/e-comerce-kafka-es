@@ -1,8 +1,14 @@
-import "./App.css";
-import { ShopPage } from "./pages/ShopPage";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { AuthPageWrapper } from "./components/auth/AuthPageWrapper";
+import { ProtectedRoutes } from "./components/auth/ProtectedRoutes";
 
-function App() {
-  return <ShopPage />;
+export default function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/login" element={<AuthPageWrapper />} />
+        <Route path="/*" element={<ProtectedRoutes />} />
+      </Routes>
+    </BrowserRouter>
+  );
 }
-
-export default App;
