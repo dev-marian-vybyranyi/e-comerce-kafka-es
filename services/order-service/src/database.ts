@@ -1,16 +1,5 @@
-import { OrderStatus } from "@ecommerce/shared";
+import { OrderStatus, prisma } from "@ecommerce/shared";
 import "dotenv/config";
-import { PrismaClient } from "../generated/prisma";
-
-declare global {
-  var prismaOrder: PrismaClient | undefined;
-}
-
-export const prisma = global.prismaOrder || new PrismaClient();
-
-if (process.env.NODE_ENV !== "production") {
-  global.prismaOrder = prisma;
-}
 
 export interface OrderRow {
   orderId: string;

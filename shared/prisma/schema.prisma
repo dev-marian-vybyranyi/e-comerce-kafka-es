@@ -21,3 +21,16 @@ model User {
 
   @@map("users")
 }
+
+model Order {
+  orderId     String   @id
+  userId      String
+  items       Json
+  totalAmount Float
+  status      String   @default("PENDING")
+  courier     String?
+  createdAt   DateTime
+  updatedAt   DateTime
+
+  @@map("orders")
+}
