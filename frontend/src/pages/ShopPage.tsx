@@ -1,107 +1,65 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import type { Product } from "../api/products";
+import { productsApi } from "../api/products";
 import { CartSidebar } from "../components/cart/CartSidebar";
 import { CategoryFilter } from "../components/shop/CategoryFilter";
-import { type Product, ProductCard } from "../components/shop/ProductCard";
+import { ProductCard } from "../components/shop/ProductCard";
 
-export const PRODUCTS: Product[] = [
-  {
-    id: "iphone-15",
-    name: "iPhone 15",
-    price: 999.99,
-    category: "Smartphones",
-    emoji: "📱",
-  },
-  {
-    id: "iphone-15-pro",
-    name: "iPhone 15 Pro",
-    price: 1199.99,
-    category: "Smartphones",
-    emoji: "📱",
-  },
-  {
-    id: "macbook-air",
-    name: "MacBook Air M2",
-    price: 1299.99,
-    category: "Notebooks",
-    emoji: "💻",
-  },
-  {
-    id: "macbook-pro",
-    name: "MacBook Pro M3",
-    price: 1999.99,
-    category: "Notebooks",
-    emoji: "💻",
-  },
-  {
-    id: "airpods-pro",
-    name: "AirPods Pro",
-    price: 249.99,
-    category: "Audio",
-    emoji: "🎧",
-  },
-  {
-    id: "airpods-max",
-    name: "AirPods Max",
-    price: 549.99,
-    category: "Audio",
-    emoji: "🎧",
-  },
-  {
-    id: "ipad-mini",
-    name: "iPad Mini",
-    price: 499.99,
-    category: "Tablets",
-    emoji: "📱",
-  },
-  {
-    id: "ipad-pro",
-    name: "iPad Pro M4",
-    price: 1099.99,
-    category: "Tablets",
-    emoji: "📟",
-  },
-  {
-    id: "apple-watch",
-    name: "Apple Watch S9",
-    price: 399.99,
-    category: "Watches",
-    emoji: "⌚",
-  },
-  {
-    id: "apple-watch-u",
-    name: "Apple Watch Ultra",
-    price: 799.99,
-    category: "Watches",
-    emoji: "⌚",
-  },
-];
-
-const CATEGORIES = [
-  "All",
-  ...Array.from(new Set(PRODUCTS.map((p) => p.category))),
-];
+const CATEGORIES_ALL = "All";
 
 export function ShopPage() {
-  const [category, setCategory] = useState("All");
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [category, setCategory] = useState(CATEGORIES_ALL);
 
+  useEffect(() => {
+    productsApi
+      .list()
+      .then((res) => setProducts(res.data.products))
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, []);
+
+  const categories = [
+    CATEGORIES_ALL,
+    ...Array.from(new Set(products.map((p) => p.category))),
+  ];
   const filtered =
-    category === "All"
-      ? PRODUCTS
-      : PRODUCTS.filter((p) => p.category === category);
+    category === CATEGORIES_ALL
+      ? products
+      : products.filter((p) => p.category === category);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-16 text-gray-400">
+        <div className="text-center">
+          <div className="text-4xl mb-3">🛍️</div>
+          <p>Loading products...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
       <CategoryFilter
-        categories={CATEGORIES}
+        categories={categories}
         activeCategory={category}
         onSelectCategory={setCategory}
       />
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-        {filtered.map((product) => (
-          <ProductCard key={product.id} product={product} />
-        ))}
-      </div>
+      {filtered.length === 0 ? (
+        <div className="text-center py-16 text-gray-400">
+          <p className="text-4xl mb-3">📦</p>
+          <p>No products</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          {filtered.map((product) => (
+            <ProductCard key={product.id} product={product} />
+          ))}
+        </div>
+      )}
 
       <CartSidebar />
     </>
