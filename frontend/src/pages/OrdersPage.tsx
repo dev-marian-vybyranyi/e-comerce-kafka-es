@@ -21,9 +21,12 @@ export function OrdersPage() {
 
   useEffect(() => {
     fetchOrders();
+  }, []);
 
+  useEffect(() => {
     if (!accessToken) return;
-    const sse = new EventSource(`http://localhost:8000/api/events`);
+
+    const sse = new EventSource(`http://localhost:3001/events`);
 
     sse.addEventListener("order.status.updated", (e) => {
       const update = JSON.parse(e.data);
@@ -35,8 +38,12 @@ export function OrdersPage() {
       );
     });
 
+    sse.onerror = () => {
+      console.warn("[SSE] Connection error, retrying...");
+    };
+
     return () => sse.close();
-  }, []);
+  }, [accessToken]);
 
   if (isLoading) {
     return (
