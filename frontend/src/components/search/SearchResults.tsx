@@ -43,37 +43,40 @@ export function SearchResults({
       </div>
 
       <div className="divide-y divide-gray-50">
-        {results.map((order) => (
-          <div
-            key={order.orderId}
-            className="px-4 py-3 hover:bg-gray-50 transition-colors"
-          >
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="font-mono text-xs text-gray-400">
-                {order.orderId.slice(0, 20)}...
-              </span>
-              <StatusBadge status={order.status} />
-            </div>
-            <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500">
-              <span>👤 {order.userId}</span>
-              <span className="font-semibold text-gray-800">
-                {formatCurrency(order.totalAmount)}
-              </span>
-              {order.courier && <span>🚚 {order.courier}</span>}
-              <span>{formatDate(order.createdAt)}</span>
-            </div>
-            <div className="flex gap-1 mt-1.5 flex-wrap">
-              {order.items?.map((item, i) => (
-                <span
-                  key={i}
-                  className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full"
-                >
-                  {item.productId} ×{item.quantity}
+        {results.map((order, idx) => {
+          if (!order || !order.orderId) return null;
+          return (
+            <div
+              key={order.orderId ?? idx}
+              className="px-4 py-3 hover:bg-gray-50 transition-colors"
+            >
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="font-mono text-xs text-gray-400">
+                  {order.orderId.slice(0, 20)}...
                 </span>
-              ))}
+                <StatusBadge status={order.status} />
+              </div>
+              <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500">
+                <span>👤 {order.userId}</span>
+                <span className="font-semibold text-gray-800">
+                  {formatCurrency(order.totalAmount)}
+                </span>
+                {order.courier && <span>🚚 {order.courier}</span>}
+                <span>{formatDate(order.createdAt)}</span>
+              </div>
+              <div className="flex gap-1 mt-1.5 flex-wrap">
+                {order.items?.map((item, i) => (
+                  <span
+                    key={i}
+                    className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full"
+                  >
+                    {item.productId} ×{item.quantity}
+                  </span>
+                ))}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {pages > 1 && (
