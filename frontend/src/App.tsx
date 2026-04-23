@@ -1,8 +1,8 @@
 import "./App.css";
-import { AuthPage } from "./pages/AuthPage";
+import { ShopPage } from "./pages/ShopPage";
 
 function App() {
-  return <AuthPage />;
+  return <ShopPage />;
 }
 
 export default App;
