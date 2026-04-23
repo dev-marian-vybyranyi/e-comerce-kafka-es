@@ -87,3 +87,27 @@ export async function getAllOrders(
 export async function getOrdersCount(): Promise<number> {
   return prisma.order.count();
 }
+
+export async function getOrdersByUserId(
+  userId: string,
+  limit = 50,
+  offset = 0,
+): Promise<OrderRow[]> {
+  const orders = await prisma.order.findMany({
+    where: { userId },
+    orderBy: { createdAt: "desc" },
+    take: limit,
+    skip: offset,
+  });
+  return orders.map((o) => ({
+    ...o,
+    items: JSON.stringify(o.items),
+    createdAt: o.createdAt.toISOString(),
+    updatedAt: o.updatedAt.toISOString(),
+    status: o.status as OrderStatus,
+  }));
+}
+
+export async function getOrdersCountByUserId(userId: string): Promise<number> {
+  return prisma.order.count({ where: { userId } });
+}

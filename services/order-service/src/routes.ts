@@ -12,7 +12,9 @@ import { z } from "zod";
 import {
   getAllOrders,
   getOrder,
+  getOrdersByUserId,
   getOrdersCount,
+  getOrdersCountByUserId,
   insertOrder,
 } from "./database";
 import { sseManager } from "./sse";
@@ -77,10 +79,16 @@ router.post("/orders", async (req: Request, res: Response) => {
 router.get("/orders", async (req: Request, res: Response) => {
   const limit = Math.min(parseInt(req.query.limit as string) || 20, 100);
   const offset = parseInt(req.query.offset as string) || 0;
+  const userRole = req.headers["x-user-role"] as string;
+  const userId = req.headers["x-user-id"] as string;
+
+  const isAdmin = userRole === "admin";
 
   const [orders, total] = await Promise.all([
-    getAllOrders(limit, offset),
-    getOrdersCount(),
+    isAdmin
+      ? getAllOrders(limit, offset)
+      : getOrdersByUserId(userId, limit, offset),
+    isAdmin ? getOrdersCount() : getOrdersCountByUserId(userId),
   ]);
 
   const result = orders.map((o) => ({ ...o, items: JSON.parse(o.items) }));
