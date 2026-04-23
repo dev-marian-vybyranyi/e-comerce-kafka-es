@@ -7,6 +7,7 @@ export interface User {
   username: string;
   firstName: string;
   lastName: string;
+  role: "user" | "admin";
 }
 
 interface AuthState {
@@ -18,11 +19,12 @@ interface AuthState {
   setTokens: (accessToken: string, refreshToken: string) => void;
   setLoading: (loading: boolean) => void;
   logout: () => void;
+  isAdmin: () => boolean;
 }
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       user: null,
       accessToken: null,
       refreshToken: null,
@@ -37,6 +39,8 @@ export const useAuthStore = create<AuthState>()(
       setLoading: (isLoading) => set({ isLoading }),
 
       logout: () => set({ user: null, accessToken: null, refreshToken: null }),
+
+      isAdmin: () => get().user?.role === "admin",
     }),
     {
       name: "auth-storage",

@@ -9,17 +9,25 @@ interface HeaderProps {
   onTabChange: (tab: string) => void;
 }
 
-const TABS = [
+const USER_TABS = [
   { id: "shop", label: "Shop" },
   { id: "orders", label: "Orders" },
-  { id: "analytics", label: "Analytics" },
   { id: "search", label: "Search" },
 ];
 
+const ADMIN_TABS = [
+  { id: "orders", label: "All orders" },
+  { id: "analytics", label: "Analytics" },
+  { id: "search", label: "Search" },
+  { id: "products", label: "Products" },
+];
+
 export function Header({ activeTab, onTabChange }: HeaderProps) {
-  const { user, refreshToken, logout } = useAuthStore();
+  const { user, refreshToken, logout, isAdmin } = useAuthStore();
   const { count, openCart } = useCartStore();
   const cartCount = count();
+  const admin = isAdmin();
+  const tabs = admin ? ADMIN_TABS : USER_TABS;
 
   const handleLogout = async () => {
     if (refreshToken) await authApi.logout(refreshToken).catch(() => {});
@@ -30,10 +38,17 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
     <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
         <div className="flex items-center gap-8">
-          <span className="text-xl font-bold text-gray-900">MicroShop</span>
+          <div className="flex items-center gap-2">
+            <span className="text-xl font-bold text-gray-900">Micro Shop</span>
+            {admin && (
+              <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">
+                Admin
+              </span>
+            )}
+          </div>
 
           <nav className="hidden md:flex gap-1">
-            {TABS.map((tab) => (
+            {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => onTabChange(tab.id)}
@@ -51,7 +66,7 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
         </div>
 
         <div className="flex items-center gap-3">
-          {activeTab === "shop" && (
+          {!admin && activeTab === "shop" && (
             <button
               onClick={openCart}
               className="relative p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
@@ -69,7 +84,7 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
             <p className="text-sm font-medium text-gray-900 leading-tight">
               {user?.firstName} {user?.lastName}
             </p>
-            <p className="text-xs text-gray-400">{user?.username}</p>
+            <p className="text-xs text-gray-400">@{user?.username}</p>
           </div>
 
           <Button variant="secondary" size="sm" onClick={handleLogout}>
@@ -80,7 +95,7 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
 
       {/* Mobile nav */}
       <div className="md:hidden flex gap-1 px-4 pb-3 overflow-x-auto">
-        {TABS.map((tab) => (
+        {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => onTabChange(tab.id)}
