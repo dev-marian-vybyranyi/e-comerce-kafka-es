@@ -14,7 +14,7 @@ export function AuthPageWrapper() {
         (location.state as { from?: Location })?.from?.pathname ?? "/";
       navigate(from, { replace: true });
     }
-  }, [user, navigate, location]);
+  }, [user]);
 
   return <AuthPage />;
 }

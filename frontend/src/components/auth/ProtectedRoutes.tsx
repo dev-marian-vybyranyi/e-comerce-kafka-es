@@ -8,6 +8,7 @@ import {
 } from "react-router-dom";
 import { authApi } from "../../api/auth";
 import { Layout } from "../layout/Layout";
+import { AdminProductsPage } from "../../pages/AdminProductsPage";
 import { AnalyticsPage } from "../../pages/AnalyticsPage";
 import { OrdersPage } from "../../pages/OrdersPage";
 import { SearchPage } from "../../pages/SearchPage";
@@ -15,10 +16,11 @@ import { ShopPage } from "../../pages/ShopPage";
 import { useAuthStore } from "../../store/authStore";
 
 export function ProtectedRoutes() {
-  const { user, accessToken, setAuth, logout } = useAuthStore();
+  const { user, accessToken, setAuth, logout, isAdmin } = useAuthStore();
   const [initializing, setInitializing] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
+  const admin = isAdmin();
 
   useEffect(() => {
     if (!accessToken) {
@@ -46,7 +48,7 @@ export function ProtectedRoutes() {
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="text-4xl mb-4">🛍️</div>
-          <div className="text-gray-400 text-sm">Loading...</div>
+          <div className="text-gray-400 text-sm">Завантаження...</div>
         </div>
       </div>
     );
@@ -55,14 +57,15 @@ export function ProtectedRoutes() {
   if (!user) return <Navigate to="/login" state={{ from: location }} replace />;
 
   const TAB_MAP: Record<string, string> = {
-    "/": "shop",
+    "/": admin ? "orders" : "shop",
     "/shop": "shop",
     "/orders": "orders",
     "/analytics": "analytics",
     "/search": "search",
+    "/products": "products",
   };
 
-  const activeTab = TAB_MAP[location.pathname] ?? "shop";
+  const activeTab = TAB_MAP[location.pathname] ?? (admin ? "orders" : "shop");
 
   const handleTabChange = (tab: string) => {
     navigate(tab === "shop" ? "/" : `/${tab}`);
@@ -71,11 +74,24 @@ export function ProtectedRoutes() {
   return (
     <Layout activeTab={activeTab} onTabChange={handleTabChange}>
       <Routes>
-        <Route path="/" element={<ShopPage />} />
-        <Route path="/shop" element={<Navigate to="/" replace />} />
+        <Route
+          path="/"
+          element={admin ? <Navigate to="/orders" replace /> : <ShopPage />}
+        />
+        <Route
+          path="/shop"
+          element={admin ? <Navigate to="/orders" replace /> : <ShopPage />}
+        />
         <Route path="/orders" element={<OrdersPage />} />
-        <Route path="/analytics" element={<AnalyticsPage />} />
+        <Route
+          path="/analytics"
+          element={admin ? <AnalyticsPage /> : <Navigate to="/" replace />}
+        />
         <Route path="/search" element={<SearchPage />} />
+        <Route
+          path="/products"
+          element={admin ? <AdminProductsPage /> : <Navigate to="/" replace />}
+        />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Layout>
