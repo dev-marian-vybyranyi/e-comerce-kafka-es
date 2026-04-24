@@ -26,7 +26,12 @@ jobs:
         run: docker compose up --build -d
 
       - name: Wait for services
-        run: sleep 15
+        run: |
+          echo "Waiting for db-init to complete..."
+          docker wait db-init || true
+          echo "Waiting for product-service to be healthy..."
+          timeout 120 sh -c 'until docker inspect product-service --format "{{.State.Health.Status}}" 2>/dev/null | grep -q healthy; do sleep 3; done'
+          echo "All services ready"
 
       - name: Check status
         run: docker compose ps
