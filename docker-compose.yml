@@ -65,6 +65,21 @@ services:
       - ./docker/kafka/create-topics.sh:/create-topics.sh
     entrypoint: ["/bin/bash", "/create-topics.sh"]
 
+  # DB Init (push Prisma schema)
+  db-init:
+    image: node:20-alpine
+    container_name: db-init
+    networks: [kafka-net]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./shared/prisma/schema.prisma:/app/schema.prisma
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+    command: >
+      sh -c "npx --yes prisma@5.22.0 db push --schema=/app/schema.prisma --skip-generate"
+
   # Kafka UI
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
@@ -190,6 +205,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
     ports:
       - "${AUTH_SERVICE_PORT}:${AUTH_SERVICE_PORT}"
     environment:
@@ -223,6 +240,8 @@ services:
         condition: service_completed_successfully
       postgres:
         condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
     ports:
       - "${ORDER_SERVICE_PORT}:${ORDER_SERVICE_PORT}"
     environment:
@@ -330,6 +349,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
     ports:
       - "${PRODUCT_SERVICE_PORT}:${PRODUCT_SERVICE_PORT}"
     environment:
