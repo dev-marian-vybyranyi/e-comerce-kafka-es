@@ -1,0 +1,69 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    name: Deploy on EC2
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Write .env file
+        run: |
+          cat > .env << 'ENVEOF'
+          ${{ secrets.ENV_FILE }}
+          ENVEOF
+
+      - name: Stop existing containers
+        run: docker compose down --remove-orphans || true
+
+      - name: Build and start containers
+        run: docker compose up --build -d
+
+      - name: Wait for services
+        run: sleep 15
+
+      - name: Check status
+        run: docker compose ps
+
+      - name: Seed admin user
+        run: |
+          docker exec auth-service node -e "
+            const { PrismaClient } = require('./node_modules/@ecommerce/shared/generated/prisma');
+            const bcrypt = require('bcryptjs');
+            const prisma = new PrismaClient();
+            async function seed() {
+              const exists = await prisma.user.findUnique({ where: { email: 'admin@shopflow.com' } });
+              if (exists) { console.log('Admin exists'); return; }
+              const password = await bcrypt.hash('admin123', 10);
+              await prisma.user.create({ data: { email: 'admin@shopflow.com', username: 'admin', password, firstName: 'Admin', lastName: 'ShopFlow', role: 'admin' }});
+              console.log('Admin created!');
+            }
+            seed().catch(console.error).finally(() => prisma.\$disconnect());
+          " || true
+
+      - name: Seed products
+        run: |
+          docker exec product-service node -e "
+            const { PrismaClient } = require('./node_modules/@ecommerce/shared/generated/prisma');
+            const prisma = new PrismaClient();
+            async function seed() {
+              const count = await prisma.product.count();
+              if (count > 0) { console.log('Products exist:', count); return; }
+              const products = [
+                { name: 'iPhone 15', description: 'Apple iPhone 15 128GB', price: 999.99, category: 'Smartphones', emoji: '📱' },
+                { name: 'iPhone 15 Pro', description: 'Apple iPhone 15 Pro 256GB', price: 1199.99, category: 'Smartphones', emoji: '📱' },
+                { name: 'MacBook Air M2', description: 'Apple MacBook Air 13" M2', price: 1299.99, category: 'Laptops', emoji: '💻' },
+                { name: 'MacBook Pro M3', description: 'Apple MacBook Pro 14" M3', price: 1999.99, category: 'Laptops', emoji: '💻' },
+                { name: 'AirPods Pro', description: 'Apple AirPods Pro 2nd Gen', price: 249.99, category: 'Audio', emoji: '🎧' },
+              ];
+              for (const p of products) await prisma.product.create({ data: p });
+              console.log('Products seeded!');
+            }
+            seed().catch(console.error).finally(() => prisma.\$disconnect());
+          " || true
