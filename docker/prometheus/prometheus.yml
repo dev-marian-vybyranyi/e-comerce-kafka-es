@@ -31,3 +31,13 @@ scrape_configs:
     static_configs:
       - targets: ['search-service:3005']
     metrics_path: '/metrics'
+
+  - job_name: 'auth-service'
+    static_configs:
+      - targets: ['auth-service:3006']
+    metrics_path: '/metrics'
+
+  - job_name: 'product-service'
+    static_configs:
+      - targets: ['product-service:3007']
+    metrics_path: '/metrics'

@@ -11,7 +11,9 @@ RUN npm run build --workspace=shared && npm run build --workspace=services/deliv
 FROM node:20-alpine
 WORKDIR /app
 COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/shared/dist ./shared/dist
+COPY --from=builder /app/shared/dist ./node_modules/@ecommerce/shared/dist
+COPY --from=builder /app/shared/generated ./node_modules/@ecommerce/shared/generated
+COPY --from=builder /app/shared/package.json ./node_modules/@ecommerce/shared/package.json
 COPY --from=builder /app/services/delivery-service/dist ./dist
 COPY --from=builder /app/services/delivery-service/package.json ./
 ENV NODE_ENV=production

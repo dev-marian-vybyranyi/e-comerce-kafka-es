@@ -9,9 +9,23 @@ const PORT = parseInt(process.env.GATEWAY_PORT || "8000");
 
 const PROTECTED_AUTH_ROUTES = ["/auth/me", "/auth/logout-all"];
 
+const SERVICES = {
+  auth: process.env.AUTH_SERVICE_URL || "http://localhost:3006",
+  orders: process.env.ORDER_SERVICE_URL || "http://localhost:3001",
+  search: process.env.SEARCH_SERVICE_URL || "http://localhost:3005",
+  analytics: process.env.ANALYTICS_SERVICE_URL || "http://localhost:3004",
+  products: process.env.PRODUCT_SERVICE_URL || "http://localhost:3007",
+};
+
+console.log("[Gateway] Services:", SERVICES);
+
 app.use(
   cors({
-    origin: ["http://localhost:5173", "http://localhost:3000"],
+    origin: [
+      "http://localhost:5173",
+      "http://localhost:3000",
+      "http://localhost",
+    ],
     credentials: true,
   }),
 );
@@ -59,7 +73,12 @@ function getUserHeaders(req: AuthRequest): Record<string, string> {
 
 // Health
 app.get("/health", (_req, res) => {
-  res.json({ status: "ok", service: "api-gateway", uptime: process.uptime() });
+  res.json({
+    status: "ok",
+    service: "api-gateway",
+    uptime: process.uptime(),
+    services: SERVICES,
+  });
 });
 
 // Auth
@@ -73,12 +92,12 @@ app.all("/api/auth/:path(*)", async (req: Request, res: Response) => {
       await proxyRequest(
         req,
         res,
-        `http://localhost:3006${authPath}`,
+        `${SERVICES.auth}${authPath}`,
         getUserHeaders(authReq),
       );
     });
   } else {
-    await proxyRequest(req, res, `http://localhost:3006${authPath}`);
+    await proxyRequest(req, res, `${SERVICES.auth}${authPath}`);
   }
 });
 
@@ -91,7 +110,7 @@ app.get("/api/events", authMiddleware, (req: AuthRequest, res: Response) => {
   res.flushHeaders();
 
   axios
-    .get("http://localhost:3001/events", {
+    .get(`${SERVICES.orders}/events`, {
       responseType: "stream",
       headers: getUserHeaders(req),
     })
@@ -111,7 +130,7 @@ app.all(
     await proxyRequest(
       req,
       res,
-      `http://localhost:3001/orders${path}`,
+      `${SERVICES.orders}/orders${path}`,
       getUserHeaders(req),
     );
   },
@@ -124,7 +143,7 @@ app.all(
     await proxyRequest(
       req,
       res,
-      "http://localhost:3001/orders",
+      `${SERVICES.orders}/orders`,
       getUserHeaders(req),
     );
   },
@@ -139,7 +158,7 @@ app.all(
     await proxyRequest(
       req,
       res,
-      `http://localhost:3005/search${path}`,
+      `${SERVICES.search}/search${path}`,
       getUserHeaders(req),
     );
   },
@@ -152,7 +171,7 @@ app.all(
     await proxyRequest(
       req,
       res,
-      "http://localhost:3005/search",
+      `${SERVICES.search}/search`,
       getUserHeaders(req),
     );
   },
@@ -166,7 +185,7 @@ app.all(
     await proxyRequest(
       req,
       res,
-      "http://localhost:3004/stats",
+      `${SERVICES.analytics}/stats`,
       getUserHeaders(req),
     );
   },
@@ -181,7 +200,7 @@ app.all(
     await proxyRequest(
       req,
       res,
-      `http://localhost:3007/products${path}`,
+      `${SERVICES.products}/products${path}`,
       getUserHeaders(req),
     );
   },
@@ -194,7 +213,7 @@ app.all(
     await proxyRequest(
       req,
       res,
-      "http://localhost:3007/products",
+      `${SERVICES.products}/products`,
       getUserHeaders(req),
     );
   },
@@ -207,4 +226,9 @@ app.use((_req, res) => {
 
 app.listen(PORT, () => {
   console.log(`[api-gateway] Running on http://localhost:${PORT}`);
+  console.log(`  Auth:      ${SERVICES.auth}`);
+  console.log(`  Orders:    ${SERVICES.orders}`);
+  console.log(`  Search:    ${SERVICES.search}`);
+  console.log(`  Analytics: ${SERVICES.analytics}`);
+  console.log(`  Products:  ${SERVICES.products}`);
 });

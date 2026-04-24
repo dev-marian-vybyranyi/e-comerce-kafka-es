@@ -23,7 +23,7 @@ services:
       timeout: 5s
       retries: 5
 
-  # Kafkaxb 
+  # Kafkaxb
   kafka:
     image: confluentinc/cp-kafka:7.5.0
     container_name: kafka
@@ -200,7 +200,11 @@ services:
       REDIS_URL: ${REDIS_URL}
       AUTH_SERVICE_PORT: ${AUTH_SERVICE_PORT}
     healthcheck:
-      test: ["CMD-SHELL", "curl -s http://localhost:${AUTH_SERVICE_PORT}/health | grep -q ok"]
+      test:
+        [
+          "CMD-SHELL",
+          "curl -s http://localhost:${AUTH_SERVICE_PORT}/health | grep -q ok",
+        ]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -225,7 +229,11 @@ services:
       KAFKA_CLIENT_ID: ${KAFKA_CLIENT_ID}
       ORDER_SERVICE_PORT: ${ORDER_SERVICE_PORT}
     healthcheck:
-      test: ["CMD-SHELL", "curl -s http://localhost:${ORDER_SERVICE_PORT}/health | grep -q ok"]
+      test:
+        [
+          "CMD-SHELL",
+          "curl -s http://localhost:${ORDER_SERVICE_PORT}/health | grep -q ok",
+        ]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -318,7 +326,11 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
       PRODUCT_SERVICE_PORT: ${PRODUCT_SERVICE_PORT}
     healthcheck:
-      test: ["CMD-SHELL", "curl -s http://localhost:${PRODUCT_SERVICE_PORT}/health | grep -q ok"]
+      test:
+        [
+          "CMD-SHELL",
+          "curl -s http://localhost:${PRODUCT_SERVICE_PORT}/health | grep -q ok",
+        ]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -340,12 +352,17 @@ services:
     environment:
       GATEWAY_PORT: ${GATEWAY_PORT}
       JWT_SECRET: ${JWT_SECRET}
+      AUTH_SERVICE_URL: ${AUTH_SERVICE_URL}
+      ORDER_SERVICE_URL: ${ORDER_SERVICE_URL}
+      SEARCH_SERVICE_URL: ${SEARCH_SERVICE_URL}
+      ANALYTICS_SERVICE_URL: ${ANALYTICS_SERVICE_URL}
+      PRODUCT_SERVICE_URL: ${PRODUCT_SERVICE_URL}
 
   # Frontend
   frontend:
     build:
-      context: ./frontend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: frontend/Dockerfile
     container_name: frontend
     networks: [kafka-net]
     depends_on: [api-gateway]
