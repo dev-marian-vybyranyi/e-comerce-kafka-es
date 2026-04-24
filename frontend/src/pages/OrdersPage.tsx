@@ -26,7 +26,8 @@ export function OrdersPage() {
   useEffect(() => {
     if (!accessToken) return;
 
-    const sse = new EventSource(`http://localhost:3001/events`);
+    const sseUrl = import.meta.env.PROD ? "/api/events" : "http://localhost:8000/api/events";
+    const sse = new EventSource(sseUrl);
 
     sse.addEventListener("order.status.updated", (e) => {
       const update = JSON.parse(e.data);
