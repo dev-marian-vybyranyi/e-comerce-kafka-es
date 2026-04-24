@@ -5,6 +5,7 @@ COPY package.json tsconfig.json ./
 COPY services/analytics-service/package.json ./services/analytics-service/
 COPY services/analytics-service/tsconfig.json ./services/analytics-service/
 RUN npm install --workspace=shared --workspace=services/analytics-service
+RUN npx prisma generate --schema=shared/prisma/schema.prisma
 COPY services/analytics-service/src ./services/analytics-service/src
 RUN npm run build --workspace=shared && npm run build --workspace=services/analytics-service
 
@@ -17,5 +18,6 @@ COPY --from=builder /app/shared/package.json ./node_modules/@ecommerce/shared/pa
 COPY --from=builder /app/services/analytics-service/dist ./dist
 COPY --from=builder /app/services/analytics-service/package.json ./
 ENV NODE_ENV=production
+ENV PRISMA_QUERY_ENGINE_LIBRARY=/app/shared/generated/prisma/libquery_engine-linux-musl-arm64-openssl-3.0.x.so.node
 EXPOSE 3004
 CMD ["node", "dist/index.js"]

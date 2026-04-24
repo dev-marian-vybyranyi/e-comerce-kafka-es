@@ -5,6 +5,7 @@ COPY package.json tsconfig.json ./
 COPY services/search-service/package.json ./services/search-service/
 COPY services/search-service/tsconfig.json ./services/search-service/
 RUN npm install --workspace=shared --workspace=services/search-service
+RUN npx prisma generate --schema=shared/prisma/schema.prisma
 COPY services/search-service/src ./services/search-service/src
 RUN npm run build --workspace=shared && npm run build --workspace=services/search-service
 
@@ -17,5 +18,6 @@ COPY --from=builder /app/shared/package.json ./node_modules/@ecommerce/shared/pa
 COPY --from=builder /app/services/search-service/dist ./dist
 COPY --from=builder /app/services/search-service/package.json ./
 ENV NODE_ENV=production
+ENV PRISMA_QUERY_ENGINE_LIBRARY=/app/shared/generated/prisma/libquery_engine-linux-musl-arm64-openssl-3.0.x.so.node
 EXPOSE 3005
 CMD ["node", "dist/index.js"]

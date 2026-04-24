@@ -6,3 +6,4 @@ node_modules
 .git
 frontend/node_modules
 frontend/dist
+shared/generated
