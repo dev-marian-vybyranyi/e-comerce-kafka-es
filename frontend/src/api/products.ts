@@ -21,8 +21,17 @@ export interface ProductPayload {
   inStock: boolean;
 }
 
+export interface ProductSearchParams {
+  q?: string;
+  category?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  inStock?: boolean;
+}
+
 export const productsApi = {
-  list: () => api.get("/products"),
+  list: (params?: ProductSearchParams) => api.get("/products", { params }),
+  categories: () => api.get("/products/categories"),
   get: (id: string) => api.get(`/products/${id}`),
   create: (data: ProductPayload) => api.post("/products", data),
   update: (id: string, data: Partial<ProductPayload>) =>

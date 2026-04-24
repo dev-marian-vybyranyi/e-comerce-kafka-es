@@ -1,7 +1,7 @@
 import { ShoppingCart } from "lucide-react";
-import { authApi } from "../../api/auth";
 import { useAuthStore } from "../../store/authStore";
 import { useCartStore } from "../../store/cartStore";
+import { authApi } from "../../api/auth";
 import { Button } from "../ui/Button";
 
 interface HeaderProps {
@@ -18,7 +18,7 @@ const USER_TABS = [
 const ADMIN_TABS = [
   { id: "orders", label: "All orders" },
   { id: "analytics", label: "Analytics" },
-  { id: "search", label: "Search" },
+  { id: "search", label: "Search orders" },
   { id: "products", label: "Products" },
 ];
 
@@ -66,19 +66,20 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
         </div>
 
         <div className="flex items-center gap-3">
-          {!admin && activeTab === "shop" && (
-            <button
-              onClick={openCart}
-              className="relative p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              <ShoppingCart size={20} />
-              {cartCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium">
-                  {cartCount}
-                </span>
-              )}
-            </button>
-          )}
+          {!admin &&
+            (activeTab === "shop" || activeTab === "product-search") && (
+              <button
+                onClick={openCart}
+                className="relative p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <ShoppingCart size={20} />
+                {cartCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium">
+                    {cartCount}
+                  </span>
+                )}
+              </button>
+            )}
 
           <div className="hidden md:block text-right">
             <p className="text-sm font-medium text-gray-900 leading-tight">

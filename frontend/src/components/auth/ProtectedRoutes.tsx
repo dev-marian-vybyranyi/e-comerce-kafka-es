@@ -12,6 +12,7 @@ import { AdminProductsPage } from "../../pages/AdminProductsPage";
 import { AnalyticsPage } from "../../pages/AnalyticsPage";
 import { OrdersPage } from "../../pages/OrdersPage";
 import { SearchPage } from "../../pages/SearchPage";
+import { ProductSearchPage } from "../../pages/ProductSearchPage";
 import { ShopPage } from "../../pages/ShopPage";
 import { useAuthStore } from "../../store/authStore";
 
@@ -62,13 +63,22 @@ export function ProtectedRoutes() {
     "/orders": "orders",
     "/analytics": "analytics",
     "/search": "search",
+    "/product-search": "product-search",
     "/products": "products",
   };
 
   const activeTab = TAB_MAP[location.pathname] ?? (admin ? "orders" : "shop");
 
   const handleTabChange = (tab: string) => {
-    navigate(tab === "shop" ? "/" : `/${tab}`);
+    const routes: Record<string, string> = {
+      shop: "/",
+      orders: "/orders",
+      analytics: "/analytics",
+      search: "/search",
+      "product-search": "/product-search",
+      products: "/products",
+    };
+    navigate(routes[tab] ?? "/");
   };
 
   return (
@@ -87,7 +97,18 @@ export function ProtectedRoutes() {
           path="/analytics"
           element={admin ? <AnalyticsPage /> : <Navigate to="/" replace />}
         />
-        <Route path="/search" element={<SearchPage />} />
+        <Route
+          path="/search"
+          element={
+            admin ? <SearchPage /> : <Navigate to="/product-search" replace />
+          }
+        />
+        <Route
+          path="/product-search"
+          element={
+            !admin ? <ProductSearchPage /> : <Navigate to="/search" replace />
+          }
+        />
         <Route
           path="/products"
           element={admin ? <AdminProductsPage /> : <Navigate to="/" replace />}
