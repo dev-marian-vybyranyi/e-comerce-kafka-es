@@ -1,24 +1,14 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { analyticsApi } from "../api/analytics";
 import { searchApi } from "../api/search";
+import { useAnalyticsStore } from "../store/analyticsStore";
+import { StatsCards } from "../components/analytics/StatsCards";
 import { LineChartWidget } from "../components/analytics/LineChartWidget";
 import { PieChartWidget } from "../components/analytics/PieChartWidget";
-import { StatsCards } from "../components/analytics/StatsCards";
-
-interface Point {
-  time: string;
-  orders: number;
-}
 
 export function AnalyticsPage() {
-  const [history, setHistory] = useState<Point[]>([]);
-  const [successRate, setSuccessRate] = useState(0);
-  const [avgMs, setAvgMs] = useState(0);
-  const [totals, setTotals] = useState({
-    totalOrders: 0,
-    totalRevenue: 0,
-    avgOrderAmount: 0,
-  });
+  const { history, successRate, avgMs, totals, addPoint, setStats, setTotals } =
+    useAnalyticsStore();
 
   const fetch = async () => {
     try {
@@ -26,16 +16,12 @@ export function AnalyticsPage() {
         analyticsApi.stats(),
         searchApi.stats(),
       ]);
-      setSuccessRate(analytics.data.successRate);
-      setAvgMs(analytics.data.avgProcessingMs);
+      setStats(analytics.data.successRate, analytics.data.avgProcessingMs);
       setTotals(search.data);
-      setHistory((prev) => [
-        ...prev.slice(-20),
-        {
-          time: new Date().toLocaleTimeString("uk-UA"),
-          orders: analytics.data.ordersCount,
-        },
-      ]);
+      addPoint({
+        time: new Date().toLocaleTimeString("uk-UA"),
+        orders: analytics.data.ordersCount,
+      });
     } catch {}
   };
 
@@ -47,7 +33,7 @@ export function AnalyticsPage() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-bold text-gray-900">Analytics</h2>
+      <h2 className="text-xl font-bold text-gray-900">Аналітика</h2>
       <StatsCards
         totalOrders={totals.totalOrders}
         totalRevenue={totals.totalRevenue}
