@@ -10,6 +10,7 @@ COPY services/analytics-service/src ./services/analytics-service/src
 RUN npm run build --workspace=shared && npm run build --workspace=services/analytics-service
 
 FROM node:20-alpine
+RUN apk add --no-cache openssl
 WORKDIR /app
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/shared/dist ./node_modules/@ecommerce/shared/dist
@@ -18,6 +19,5 @@ COPY --from=builder /app/shared/package.json ./node_modules/@ecommerce/shared/pa
 COPY --from=builder /app/services/analytics-service/dist ./dist
 COPY --from=builder /app/services/analytics-service/package.json ./
 ENV NODE_ENV=production
-ENV PRISMA_QUERY_ENGINE_LIBRARY=/app/shared/generated/prisma/libquery_engine-linux-musl-arm64-openssl-3.0.x.so.node
 EXPOSE 3004
 CMD ["node", "dist/index.js"]

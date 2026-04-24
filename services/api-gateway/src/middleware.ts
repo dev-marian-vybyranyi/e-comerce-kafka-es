@@ -19,14 +19,18 @@ export function authMiddleware(
   next: NextFunction,
 ): void {
   const header = req.headers.authorization;
-  if (!header?.startsWith("Bearer ")) {
+  const queryToken = req.query.token as string | undefined;
+  const rawToken = header?.startsWith("Bearer ")
+    ? header.split(" ")[1]
+    : queryToken;
+
+  if (!rawToken) {
     res.status(401).json({ error: "No token provided" });
     return;
   }
 
-  const token = header.split(" ")[1];
   try {
-    req.user = jwt.verify(token, JWT_SECRET) as AuthRequest["user"];
+    req.user = jwt.verify(rawToken, JWT_SECRET) as AuthRequest["user"];
     next();
   } catch (err) {
     res.status(401).json({ error: "Invalid or expired token" });
