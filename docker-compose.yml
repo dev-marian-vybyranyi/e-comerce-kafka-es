@@ -78,7 +78,7 @@ services:
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
     command: >
-      sh -c "npx --yes prisma@5.22.0 db push --schema=/app/schema.prisma --skip-generate"
+      sh -c "apk add --no-cache openssl && npx --yes prisma@5.22.0 db push --schema=/app/schema.prisma --skip-generate"
 
   # Kafka UI
   kafka-ui:
